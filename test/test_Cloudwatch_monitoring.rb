@@ -8,12 +8,12 @@
 # Home::      http://github.com/grempe/amazon-ec2/tree/master
 #++
 
-require File.dirname(__FILE__) + '/test_helper.rb'
+require 'test_helper'
 
 context "CloudWatch monitoring" do
   
   before do
-    @cw = AWS::Cloudwatch::Base.new( :access_key_id => "not a key", :secret_access_key => "not a secret" )
+    @cw = AWS::Cloudwatch::Base.new(:access_key_id => "not a key", :secret_access_key => "not a secret")
 
     @success_response = <<-XML
     <PutMetricDataResponse xmlns="http://monitoring.amazonaws.com/doc/2010-08-01/">
@@ -82,6 +82,17 @@ context "CloudWatch monitoring" do
       'MetricData.member.3.Dimensions.member.1.Name' => 'InstanceID',
       'MetricData.member.3.Dimensions.member.1.Value' => 'i-12345678',
     }
+    @multiple_dimensions_request = {
+      'Namespace' => 'App/Metrics',
+      'MetricData.member.1.MetricName' => 'FooBar',
+      'MetricData.member.1.Unit' => 'Count',
+      'MetricData.member.1.Value' => '56265313',
+      'MetricData.member.1.Timestamp' => Time.now.iso8601,
+      'MetricData.member.1.Dimensions.member.1.Name' => 'InstanceID',
+      'MetricData.member.1.Dimensions.member.1.Value' => 'i-12345678',
+      'MetricData.member.1.Dimensions.member.2.Name' => 'Type',
+      'MetricData.member.1.Dimensions.member.2.Value' => 'Tweet'
+    }
   end
 
   specify "should put a single point without nested hashes" do
@@ -107,6 +118,21 @@ context "CloudWatch monitoring" do
         {:metric_name => 'FooBar', :unit => 'Count', :value => 56265313, :timestamp => @now - 180},
         {:metric_name => 'FooBar', :unit => 'Count', :value => 56265313, :timestamp => @now - 240}
       ]
+    }).should.be.an.instance_of Hash
+  end
+
+  specify "should allow multiple dimensions" do
+    @cw.stubs(:make_request).with('PutMetricData', @multiple_dimensions_request).
+      returns(:body => @success_response, :is_a => true)
+    @cw.put_metric_data({
+      :namespace => 'App/Metrics',
+      :metric_name => 'FooBar',
+      :unit => 'Count',
+      :value => 56265313,
+      :dimensions => {
+        'InstanceID' => 'i-12345678',
+        'Type' => 'Tweet'
+      }
     }).should.be.an.instance_of Hash
   end
 
