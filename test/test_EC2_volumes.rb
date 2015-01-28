@@ -8,7 +8,7 @@
 # Home::      http://github.com/grempe/amazon-ec2/tree/master
 #++
 
-require File.dirname(__FILE__) + '/test_helper.rb'
+require 'test_helper'
 
 context "EC2 volumes " do
 

@@ -151,14 +151,20 @@ module AWS
             prefix + "Value" => datum[:value].to_s,
             prefix + "Timestamp" => datum[:timestamp].iso8601
           }
-          ii = 1
+
+          dimension_index = 1
+
           datum[:dimensions].each_pair do |dimension, value|
-            dimension_prefix = prefix + "Dimensions.member.#{ii}."
+            dimension_prefix = prefix + "Dimensions.member.#{dimension_index}."
+
             raise ArgumentError, "value cannot be blank for a dimension" if value.nil?
+
             datum_params.merge!({
               dimension_prefix + "Name" => dimension,
               dimension_prefix + "Value" => value
             })
+
+            dimension_index += 1
           end unless datum[:dimensions].nil?
 
           params.merge! datum_params
